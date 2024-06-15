@@ -7,15 +7,21 @@ tokens = (
     'NUMBER',
     'EQUALS',
     'PLUS',
-    'TIMES',   # Token para '*'
+    'TIMES',
     'COMMA',
-    'LPAREN',  # Token para '('
-    'RPAREN',  # Token para ')'
+    'LPAREN',
+    'RPAREN',
     'INICIO',
     'MONITOR',
     'EXECUTE',
     'TERMINO',
-    'ZERO'
+    'ZERO',
+    'IF',
+    'THEN',
+    'ELSE',
+    'FIM',
+    'EVAL',
+    'VEZES'
 )
 
 # Expressões regulares para tokens simples
@@ -33,7 +39,13 @@ keywords = {
     'MONITOR': 'MONITOR',
     'EXECUTE': 'EXECUTE',
     'TERMINO': 'TERMINO',
-    'ZERO': 'ZERO'
+    'ZERO': 'ZERO',
+    'IF': 'IF',
+    'THEN': 'THEN',
+    'ELSE': 'ELSE',
+    'FIM': 'FIM',
+    'EVAL': 'EVAL',
+    'VEZES': 'VEZES'
 }
 
 # Tabela de símbolos
@@ -70,12 +82,13 @@ lexer = lex.lex()
 # Regras de gramática (sintáticas)
 def p_programa(p):
     'programa : INICIO varlist MONITOR varlist EXECUTE cmds TERMINO'
-    python_code.insert(0, "# Programa gerado a partir de Provol-One")
-    python_code.insert(1, "# Declaração de variáveis")
+    python_code.insert(0, "# Programa gerado a partir de Provol-One\n")
+    python_code.insert(1, "# Declaração de variáveis\n")
     declarations = [f"{var} = 0" for var in symbol_table.keys()]
     for decl in reversed(declarations):
-        python_code.insert(2, decl)
-    python_code.append("\n# Execução do código")
+        python_code.insert(2, decl + "\n")
+    python_code.append("\n# Execução do código\n")
+    python_code.extend(p[6])
     print("Programa reconhecido com sucesso!")
 
 def p_varlist(p):
@@ -95,20 +108,36 @@ def p_cmds(p):
     cmds : cmd cmds
          | cmd
     '''
-    # Continuação das regras para comandos
+    if len(p) == 3:
+        p[0] = p[1] + p[2]
+    else:
+        p[0] = p[1]
 
 def p_cmd(p):
     '''
     cmd : ID EQUALS expr
         | ZERO LPAREN ID RPAREN
+        | IF ID THEN cmds ELSE cmds FIM
+        | EVAL cmds VEZES ID FIM
     '''
     if p[1] == 'ZERO':
         symbol_table[p[3]] = 0
-        python_code.append(f"{p[3]} = 0")
+        p[0] = [f"{p[3]} = 0\n"]
         print(f"Zerando variável: {p[3]}")
+    elif p[1] == 'IF':
+        condition = p[2]
+        if_block = ''.join(p[4])
+        else_block = ''.join(p[6])
+        p[0] = [f"if {condition}:\n    {if_block}else:\n    {else_block}\n"]
+        print(f"Estrutura de controle IF-THEN-ELSE processada.")
+    elif p[1] == 'EVAL':
+        loop_block = ''.join(p[2])
+        iterations = p[4]
+        p[0] = [f"for _ in range({iterations}):\n    {loop_block}\n"]
+        print(f"Estrutura de controle EVAL processada.")
     else:
         symbol_table[p[1]] = p[3]
-        python_code.append(f"{p[1]} = {p[3]}")
+        p[0] = [f"{p[1]} = {p[3]}\n"]
         print(f"Atribuição: {p[1]} = {p[3]}")
 
 def p_expr(p):
@@ -127,7 +156,7 @@ def p_expr(p):
         if isinstance(p[1], int):
             p[0] = p[1]
         else:
-            p[0] = symbol_table.get(p[1], 0)
+            p[0] = p[1]
 
 def p_error(p):
     print("Erro de sintaxe!")
@@ -138,15 +167,16 @@ parser = yacc.yacc()
 # Função principal
 def main():
     data = """
-    INICIO X, Y
+    INICIO Y
     MONITOR Z
     EXECUTE
     Y = 2
-    X = 5
     Z = Y
-    ZERO(X)
-    Z = Z + X + Y + 1
-    Z = Z * Y
+    EVAL
+    Z = Z + 1
+    VEZES
+    Y
+    FIM
     TERMINO
     """
     
@@ -155,12 +185,7 @@ def main():
     # Exibindo a saída gerada em Python
     print("\nCódigo Python gerado:\n")
     for line in python_code:
-        print(line)
-
-    # Exibindo a tabela de símbolos
-    print("\nTabela de Símbolos:")
-    for var, val in symbol_table.items():
-        print(f"{var}: {val}")
+        print(line, end='')
 
 if __name__ == "__main__":
     main()
