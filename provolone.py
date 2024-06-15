@@ -7,6 +7,7 @@ tokens = (
     'NUMBER',
     'EQUALS',
     'PLUS',
+    'TIMES',   # Token para '*'
     'COMMA',
     'LPAREN',  # Token para '('
     'RPAREN',  # Token para ')'
@@ -20,6 +21,7 @@ tokens = (
 # Expressões regulares para tokens simples
 t_EQUALS = r'='
 t_PLUS = r'\+'
+t_TIMES = r'\*'
 t_COMMA = r','
 t_LPAREN = r'\('
 t_RPAREN = r'\)'
@@ -112,11 +114,15 @@ def p_cmd(p):
 def p_expr(p):
     '''
     expr : expr PLUS expr
+         | expr TIMES expr
          | ID
          | NUMBER
     '''
-    if len(p) == 4:  # expr PLUS expr
-        p[0] = f"({p[1]} + {p[3]})"
+    if len(p) == 4:
+        if p[2] == '+':
+            p[0] = f"({p[1]} + {p[3]})"
+        elif p[2] == '*':
+            p[0] = f"({p[1]} * {p[3]})"
     else:
         if isinstance(p[1], int):
             p[0] = p[1]
@@ -140,6 +146,7 @@ def main():
     Z = Y
     ZERO(X)
     Z = Z + X + Y + 1
+    Z = Z * Y
     TERMINO
     """
     
@@ -149,6 +156,11 @@ def main():
     print("\nCódigo Python gerado:\n")
     for line in python_code:
         print(line)
+
+    # Exibindo a tabela de símbolos
+    print("\nTabela de Símbolos:")
+    for var, val in symbol_table.items():
+        print(f"{var}: {val}")
 
 if __name__ == "__main__":
     main()
