@@ -37,6 +37,9 @@ keywords = {
 # Tabela de símbolos
 symbol_table = {}
 
+# Código Python gerado
+python_code = []
+
 # Regras para palavras-chave e identificadores
 def t_ID(t):
     r'[a-zA-Z_][a-zA-Z0-9_]*'
@@ -65,6 +68,12 @@ lexer = lex.lex()
 # Regras de gramática (sintáticas)
 def p_programa(p):
     'programa : INICIO varlist MONITOR varlist EXECUTE cmds TERMINO'
+    python_code.insert(0, "# Programa gerado a partir de Provol-One")
+    python_code.insert(1, "# Declaração de variáveis")
+    declarations = [f"{var} = 0" for var in symbol_table.keys()]
+    for decl in reversed(declarations):
+        python_code.insert(2, decl)
+    python_code.append("\n# Execução do código")
     print("Programa reconhecido com sucesso!")
 
 def p_varlist(p):
@@ -84,6 +93,7 @@ def p_cmds(p):
     cmds : cmd cmds
          | cmd
     '''
+    # Continuação das regras para comandos
 
 def p_cmd(p):
     '''
@@ -92,9 +102,11 @@ def p_cmd(p):
     '''
     if p[1] == 'ZERO':
         symbol_table[p[3]] = 0
+        python_code.append(f"{p[3]} = 0")
         print(f"Zerando variável: {p[3]}")
     else:
         symbol_table[p[1]] = p[3]
+        python_code.append(f"{p[1]} = {p[3]}")
         print(f"Atribuição: {p[1]} = {p[3]}")
 
 def p_expr(p):
@@ -104,7 +116,7 @@ def p_expr(p):
          | NUMBER
     '''
     if len(p) == 4:  # expr PLUS expr
-        p[0] = p[1] + p[3]
+        p[0] = f"({p[1]} + {p[3]})"
     else:
         if isinstance(p[1], int):
             p[0] = p[1]
@@ -133,9 +145,10 @@ def main():
     
     parser.parse(data, lexer=lexer)
 
-    print("Tabela de Símbolos:")
-    for var, val in symbol_table.items():
-        print(f"{var}: {val}")
+    # Exibindo a saída gerada em Python
+    print("\nCódigo Python gerado:\n")
+    for line in python_code:
+        print(line)
 
 if __name__ == "__main__":
     main()
