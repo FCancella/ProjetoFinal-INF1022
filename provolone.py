@@ -21,7 +21,9 @@ tokens = (
     'ELSE',
     'FIM',
     'EVAL',
-    'VEZES'
+    'VEZES',
+    'ENQUANTO',
+    'FACA'
 )
 
 # Expressões regulares para tokens simples
@@ -45,14 +47,16 @@ keywords = {
     'ELSE': 'ELSE',
     'FIM': 'FIM',
     'EVAL': 'EVAL',
-    'VEZES': 'VEZES'
+    'VEZES': 'VEZES',
+    'ENQUANTO': 'ENQUANTO',
+    'FACA': 'FACA'
 }
 
 # Tabela de símbolos
 symbol_table = {}
 
 # Código Python gerado
-python_code = []
+c_code = []
 
 # Regras para palavras-chave e identificadores
 def t_ID(t):
@@ -82,13 +86,13 @@ lexer = lex.lex()
 # Regras de gramática (sintáticas)
 def p_programa(p):
     'programa : INICIO varlist MONITOR varlist EXECUTE cmds TERMINO'
-    python_code.insert(0, "#include <stdio.h>\nint main() {\n")
-    python_code.insert(1, "\n// Declaração de variáveis\n")
+    c_code.insert(0, "#include <stdio.h>\nint main() {\n")
+    c_code.insert(1, "\n// Declaração de variáveis\n")
     declarations = [f"int {var} = 0;" for var in symbol_table.keys()]
     for decl in reversed(declarations):
-        python_code.insert(2, decl + "\n")
-    python_code.append("\n// Execução do código\n")
-    python_code.extend(p[6])
+        c_code.insert(2, decl + "\n")
+    c_code.append("\n// Execução do código\n")
+    c_code.extend(p[6])
     print("Programa reconhecido com sucesso!")
 
 def p_varlist(p):
@@ -119,6 +123,7 @@ def p_cmd(p):
         | ZERO LPAREN ID RPAREN
         | IF ID THEN cmds ELSE cmds
         | EVAL cmds VEZES ID FIM
+        | ENQUANTO ID FACA cmds FIM
     '''
     if p[1] == 'ZERO':
         symbol_table[p[3]] = 0
@@ -135,6 +140,11 @@ def p_cmd(p):
         iterations = p[4]
         p[0] = [f"for (int i = 0; i < {iterations}; i++)\n{{\n{loop_block}}}\n"]
         print(f"Estrutura de controle EVAL processada.")
+    elif p[1] == 'ENQUANTO':
+        condition = p[2]
+        loop_block = ''.join(p[4])
+        p[0] = [f"while ({condition})\n{{\n{loop_block}}}\n"]
+        print(f"Estrutura de controle ENQUANTO-FACA processada.")
     else:
         symbol_table[p[1]] = p[3]
         p[0] = [f"{p[1]} = {p[3]};\n"]
@@ -167,34 +177,29 @@ parser = yacc.yacc()
 # Função principal
 def main():
     data = """
-    INICIO Y, A
+    INICIO X, Y
     MONITOR Z
     EXECUTE
-    A = 1
     Y = 2
+    X = 5
     Z = Y
-    IF A THEN
-    EVAL
+    ENQUANTO X FACA
     Z = Z + 1
-    VEZES
-    Y
     FIM
-    ELSE
-    Z = A + 1
     TERMINO
     """
     
     parser.parse(data, lexer=lexer)
 
-    # Termiando o código Python gerado
-    python_code.append("\n// Exibindo valores das variáveis\n")
+    # Termiando o código C gerado
+    c_code.append("\n// Exibindo valores das variáveis\n")
     printf_statements = 'printf("' + ', '.join([f"{var}=%d" for var in symbol_table.keys()]) + '", ' + ', '.join(symbol_table.keys()) + ');\n'
-    python_code.append(printf_statements)
-    python_code.append("\nreturn 0;\n}")
+    c_code.append(printf_statements)
+    c_code.append("\nreturn 0;\n}")
 
-    # Exibindo a saída gerada em Python
-    print("\nCódigo Python gerado:\n")
-    for line in python_code:
+    # Exibindo a saída gerada em C
+    print("\nCódigo C gerado:\n")
+    for line in c_code:
         print(line, end='')
 
 if __name__ == "__main__":
