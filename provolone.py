@@ -82,12 +82,12 @@ lexer = lex.lex()
 # Regras de gramática (sintáticas)
 def p_programa(p):
     'programa : INICIO varlist MONITOR varlist EXECUTE cmds TERMINO'
-    python_code.insert(0, "# Programa gerado a partir de Provol-One\n")
-    python_code.insert(1, "# Declaração de variáveis\n")
-    declarations = [f"{var} = 0" for var in symbol_table.keys()]
+    python_code.insert(0, "#include <stdio.h>\nint main() {\n")
+    python_code.insert(1, "\n// Declaração de variáveis\n")
+    declarations = [f"int {var} = 0;" for var in symbol_table.keys()]
     for decl in reversed(declarations):
         python_code.insert(2, decl + "\n")
-    python_code.append("\n# Execução do código\n")
+    python_code.append("\n// Execução do código\n")
     python_code.extend(p[6])
     print("Programa reconhecido com sucesso!")
 
@@ -117,27 +117,27 @@ def p_cmd(p):
     '''
     cmd : ID EQUALS expr
         | ZERO LPAREN ID RPAREN
-        | IF ID THEN cmds ELSE cmds FIM
+        | IF ID THEN cmds ELSE cmds
         | EVAL cmds VEZES ID FIM
     '''
     if p[1] == 'ZERO':
         symbol_table[p[3]] = 0
-        p[0] = [f"{p[3]} = 0\n"]
+        p[0] = [f"{p[3]} = 0;\n"]
         print(f"Zerando variável: {p[3]}")
     elif p[1] == 'IF':
         condition = p[2]
         if_block = ''.join(p[4])
         else_block = ''.join(p[6])
-        p[0] = [f"if {condition}:\n    {if_block}else:\n    {else_block}\n"]
+        p[0] = [f"if ({condition})\n{{\n{if_block}}}\nelse\n{{\n{else_block}}}\n"]
         print(f"Estrutura de controle IF-THEN-ELSE processada.")
     elif p[1] == 'EVAL':
         loop_block = ''.join(p[2])
         iterations = p[4]
-        p[0] = [f"for _ in range({iterations}):\n    {loop_block}\n"]
+        p[0] = [f"for (int i = 0; i < {iterations}; i++)\n{{\n{loop_block}}}\n"]
         print(f"Estrutura de controle EVAL processada.")
     else:
         symbol_table[p[1]] = p[3]
-        p[0] = [f"{p[1]} = {p[3]}\n"]
+        p[0] = [f"{p[1]} = {p[3]};\n"]
         print(f"Atribuição: {p[1]} = {p[3]}")
 
 def p_expr(p):
@@ -167,20 +167,27 @@ parser = yacc.yacc()
 # Função principal
 def main():
     data = """
-    INICIO Y
+    INICIO Y, A
     MONITOR Z
     EXECUTE
+    A = 1
     Y = 2
     Z = Y
+    IF A THEN
     EVAL
     Z = Z + 1
     VEZES
     Y
     FIM
+    ELSE
+    Z = A + 1
     TERMINO
     """
     
     parser.parse(data, lexer=lexer)
+
+    # Termiando o código Python gerado
+    python_code.append("\nreturn 0;\n}")
 
     # Exibindo a saída gerada em Python
     print("\nCódigo Python gerado:\n")
