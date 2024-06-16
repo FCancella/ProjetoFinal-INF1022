@@ -187,6 +187,9 @@ def main():
     parser.parse(data, lexer=lexer)
 
     # Termiando o código Python gerado
+    python_code.append("\n// Exibindo valores das variáveis\n")
+    printf_statements = 'printf("' + ', '.join([f"{var}=%d" for var in symbol_table.keys()]) + '", ' + ', '.join(symbol_table.keys()) + ');\n'
+    python_code.append(printf_statements)
     python_code.append("\nreturn 0;\n}")
 
     # Exibindo a saída gerada em Python
