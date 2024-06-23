@@ -177,15 +177,20 @@ parser = yacc.yacc()
 # Função principal
 def main():
     data = """
-    INICIO X, Y
+    INICIO Y, A
     MONITOR Z
     EXECUTE
+    A = 0
     Y = 2
-    X = 5
     Z = Y
-    ENQUANTO X FACA
-    Z = Z + 1
+    IF A THEN
+    EVAL
+    Z = Z * 2
+    VEZES
+    Y
     FIM
+    ELSE
+    Z = A + 3
     TERMINO
     """
     
@@ -197,10 +202,13 @@ def main():
     c_code.append(printf_statements)
     c_code.append("\nreturn 0;\n}")
 
+    arq=open("arquivo_de_saida.c","w")
     # Exibindo a saída gerada em C
     print("\nCódigo C gerado:\n")
     for line in c_code:
+        arq.write(line)
         print(line, end='')
+    arq.close()
 
 if __name__ == "__main__":
     main()
