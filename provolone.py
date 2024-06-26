@@ -121,7 +121,8 @@ def p_cmd(p):
     '''
     cmd : ID EQUALS expr
         | ZERO LPAREN ID RPAREN
-        | IF ID THEN cmds ELSE cmds
+        | IF ID THEN cmds FIM
+        | IF ID THEN cmds ELSE cmds FIM
         | EVAL cmds VEZES ID FIM
         | ENQUANTO ID FACA cmds FIM
     '''
@@ -132,9 +133,13 @@ def p_cmd(p):
     elif p[1] == 'IF':
         condition = p[2]
         if_block = ''.join(p[4])
-        else_block = ''.join(p[6])
-        p[0] = [f"if ({condition})\n{{\n{if_block}}}\nelse\n{{\n{else_block}}}\n"]
-        print(f"Estrutura de controle IF-THEN-ELSE processada.")
+        if len(p)==6:
+            p[0] = [f"if ({condition})\n{{\n{if_block}}}\n"]
+            print(f"Estrutura de controle IF-THEN processada.")
+        else:
+            else_block = ''.join(p[6])
+            p[0] = [f"if ({condition})\n{{\n{if_block}}}\nelse\n{{\n{else_block}}}\n"]
+            print(f"Estrutura de controle IF-THEN-ELSE processada.")
     elif p[1] == 'EVAL':
         loop_block = ''.join(p[2])
         iterations = p[4]
@@ -189,8 +194,11 @@ def main():
     VEZES
     Y
     FIM
+    A = A + 3
     ELSE
-    Z = A + 3
+    Z = Z * 3
+    A = A + 1
+    FIM
     TERMINO
     """
     
@@ -212,3 +220,22 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+'''
+    INICIO Y, A
+    MONITOR Z
+    EXECUTE
+    A = 1
+    Y = 2
+    Z = Y
+    ENQUANTO A FACA
+    EVAL
+    Z = Z + 2
+    VEZES
+    Y
+    FIM
+    A = 0
+    FIM
+    TERMINO
+'''

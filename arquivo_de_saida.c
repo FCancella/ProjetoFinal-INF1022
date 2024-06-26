@@ -16,10 +16,12 @@ for (int i = 0; i < Y; i++)
 {
 Z = (Z * 2);
 }
+A = (A + 3);
 }
 else
 {
-Z = (A + 3);
+Z = (Z * 3);
+A = (A + 1);
 }
 
 // Exibindo valores das variáveis
