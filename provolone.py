@@ -55,6 +55,9 @@ keywords = {
 # Tabela de símbolos
 symbol_table = {}
 
+# Lista de monitorados
+monitorados = []
+
 # Código Python gerado
 c_code = []
 
@@ -85,12 +88,14 @@ lexer = lex.lex()
 
 # Regras de gramática (sintáticas)
 def p_programa(p):
-    'programa : INICIO varlist MONITOR varlist EXECUTE cmds TERMINO'
+    'programa : INICIO varlist MONITOR varlist_m EXECUTE cmds TERMINO'
     c_code.insert(0, "#include <stdio.h>\nint main() {\n")
     c_code.insert(1, "\n// Declaração de variáveis\n")
     declarations = [f"int {var} = 0;" for var in symbol_table.keys()]
     for decl in reversed(declarations):
         c_code.insert(2, decl + "\n")
+        if decl.split()[1] in monitorados:
+            c_code.insert(3, f'printf("{decl.split()[1]} = 0\\n");\n')
     c_code.append("\n// Execução do código\n")
     c_code.extend(p[6])
     print("Programa reconhecido com sucesso!")
@@ -106,6 +111,20 @@ def p_varlist(p):
     else:
         symbol_table[p[1]] = 0
         p[0] = {p[1]: 0}
+
+def p_varlist_m(p):
+    '''
+    varlist_m : ID COMMA varlist_m
+              | ID
+    '''
+    if len(p) == 4:
+        symbol_table[p[1]] = 0
+        p[0] = {p[1]: 0, **p[3]}
+        monitorados.append(p[1])
+    else:
+        symbol_table[p[1]] = 0
+        p[0] = {p[1]: 0}
+        monitorados.append(p[1])
 
 def p_cmds(p):
     '''
@@ -152,8 +171,11 @@ def p_cmd(p):
         print(f"Estrutura de controle ENQUANTO-FACA processada.")
     else:
         symbol_table[p[1]] = p[3]
-        p[0] = [f"{p[1]} = {p[3]};\n"]
         print(f"Atribuição: {p[1]} = {p[3]}")
+        if p[1] in monitorados:
+            p[0] = [f'{p[1]} = {p[3]};\nprintf("{p[1]} = %d\\n",{p[3]});\n']
+        else:
+            p[0] = [f"{p[1]} = {p[3]};\n"]
 
 def p_expr(p):
     '''
@@ -185,8 +207,8 @@ def main():
     INICIO Y, A
     MONITOR Z
     EXECUTE
-    A = 0
     Y = 2
+    ZERO(A)
     Z = Y
     IF A THEN
     EVAL
