@@ -242,22 +242,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-'''
-    INICIO Y, A
-    MONITOR Z
-    EXECUTE
-    A = 1
-    Y = 2
-    Z = Y
-    ENQUANTO A FACA
-    EVAL
-    Z = Z + 2
-    VEZES
-    Y
-    FIM
-    A = 0
-    FIM
-    TERMINO
-'''
