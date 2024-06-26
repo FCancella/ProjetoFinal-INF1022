@@ -147,7 +147,10 @@ def p_cmd(p):
     '''
     if p[1] == 'ZERO':
         symbol_table[p[3]] = 0
-        p[0] = [f"{p[3]} = 0;\n"]
+        if p[3] in monitorados:
+            p[0] = [f'{p[3]} = 0;\nprintf("{p[3]} = %d\\n",{p[3]});\n']
+        else:
+            p[0] = [f"{p[3]} = 0;\n"]
         print(f"Zerando variável: {p[3]}")
     elif p[1] == 'IF':
         condition = p[2]
@@ -173,7 +176,7 @@ def p_cmd(p):
         symbol_table[p[1]] = p[3]
         print(f"Atribuição: {p[1]} = {p[3]}")
         if p[1] in monitorados:
-            p[0] = [f'{p[1]} = {p[3]};\nprintf("{p[1]} = %d\\n",{p[3]});\n']
+            p[0] = [f'{p[1]} = {p[3]};\nprintf("{p[1]} = %d\\n",{p[1]});\n']
         else:
             p[0] = [f"{p[1]} = {p[3]};\n"]
 
@@ -190,10 +193,7 @@ def p_expr(p):
         elif p[2] == '*':
             p[0] = f"({p[1]} * {p[3]})"
     else:
-        if isinstance(p[1], int):
-            p[0] = p[1]
-        else:
-            p[0] = p[1]
+        p[0] = p[1]
 
 def p_error(p):
     print("Erro de sintaxe!")
@@ -204,8 +204,8 @@ parser = yacc.yacc()
 # Função principal
 def main():
     data = """
-    INICIO Y, A
-    MONITOR Z
+    INICIO Y
+    MONITOR Z, A
     EXECUTE
     Y = 2
     ZERO(A)
