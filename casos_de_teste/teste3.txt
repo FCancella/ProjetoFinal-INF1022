@@ -1,0 +1,15 @@
+    INICIO Y, A
+    MONITOR Z
+    EXECUTE
+    A = 0
+    Y = 2
+    Z = Y
+    IF A THEN
+    EVAL
+    Z = Z * 2
+    VEZES
+    Y
+    FIM
+    A = A + 3
+    FIM
+    TERMINO

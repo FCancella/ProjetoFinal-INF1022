@@ -58,7 +58,7 @@ symbol_table = {}
 # Lista de monitorados
 monitorados = []
 
-# Código Python gerado
+# Código C gerado
 c_code = []
 
 # Regras para palavras-chave e identificadores
@@ -83,17 +83,19 @@ def t_error(t):
     print(f"Caractere inválido: '{t.value[0]}'")
     t.lexer.skip(1)
 
-# Construção do lexer
 lexer = lex.lex()
 
 # Regras de gramática (sintáticas)
 def p_programa(p):
     'programa : INICIO varlist MONITOR varlist_m EXECUTE cmds TERMINO'
+    # inserção de header e função main
     c_code.insert(0, "#include <stdio.h>\nint main() {\n")
     c_code.insert(1, "\n// Declaração de variáveis\n")
+    # Declara cada uma das variáveis inicializadas com valor 0
     declarations = [f"int {var} = 0;" for var in symbol_table.keys()]
     for decl in reversed(declarations):
         c_code.insert(2, decl + "\n")
+        # Exibe o valor inicial caso a variável esteja monitorada
         if decl.split()[1] in monitorados:
             c_code.insert(3, f'printf("{decl.split()[1]} = 0\\n");\n')
     c_code.append("\n// Execução do código\n")
@@ -198,7 +200,6 @@ def p_expr(p):
 def p_error(p):
     print("Erro de sintaxe!")
 
-# Construção do parser
 parser = yacc.yacc()
 
 # Função principal
@@ -226,14 +227,14 @@ def main():
     
     parser.parse(data, lexer=lexer)
 
-    # Termiando o código C gerado
     c_code.append("\n// Exibindo valores das variáveis\n")
+    # Exibir valores finais das variáveis, e fechar a função main
     printf_statements = 'printf("' + ', '.join([f"{var}=%d" for var in symbol_table.keys()]) + '", ' + ', '.join(symbol_table.keys()) + ');\n'
     c_code.append(printf_statements)
     c_code.append("\nreturn 0;\n}")
 
     arq=open("arquivo_de_saida.c","w")
-    # Exibindo a saída gerada em C
+    # Exibir código final, e transformar em arquivo .c
     print("\nCódigo C gerado:\n")
     for line in c_code:
         arq.write(line)
